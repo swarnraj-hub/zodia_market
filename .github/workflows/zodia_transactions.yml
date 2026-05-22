@@ -1,0 +1,64 @@
+name: Zodia Transactions Export
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  export-zodia-transactions:
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 60
+
+    steps:
+
+      # ==========================================
+      # CHECKOUT REPOSITORY
+      # ==========================================
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ==========================================
+      # SETUP PYTHON
+      # ==========================================
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ==========================================
+      # INSTALL DEPENDENCIES
+      # ==========================================
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas requests boto3
+
+      # ==========================================
+      # RUN PYTHON SCRIPT
+      # ==========================================
+
+      - name: Run Zodia Script
+        env:
+          ZODIA_API_KEY: ${{ secrets.ZODIA_API_KEY }}
+          ZODIA_API_SECRET: ${{ secrets.ZODIA_API_SECRET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python zodia.py
+
+      # ==========================================
+      # UPLOAD CSV AS ARTIFACT
+      # ==========================================
+
+      - name: Upload CSV Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zodia-transactions-csv
+          path: "*.csv"
+          retention-days: 7
